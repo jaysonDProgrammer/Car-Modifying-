@@ -1,7 +1,7 @@
 import pygame
 import time
 import random
-import math
+
 
 pygame.init()
 gray=(119,118,110)
@@ -31,6 +31,8 @@ instruction_background=pygame.image.load("background2.jpg")
 car_width=56
 pause=False
 
+
+#introduction interface
 def intro_loop():
     intro=True
     while intro:
@@ -222,7 +224,7 @@ def countdown():
 
 
         
-
+#OBstacle.... cars 
 def obstacle(obs_startx,obs_starty,obs):
     if obs==0:
         obs_pic=pygame.image.load("car.jpg")
@@ -239,7 +241,7 @@ def obstacle(obs_startx,obs_starty,obs):
     elif obs==6:
         obs_pic=pygame.image.load("car7.jpg")
     gamedisplays.blit(obs_pic,(obs_startx,obs_starty))
-
+#Displaying the score at the background
 def score_system(passed,score):
     font=pygame.font.SysFont(None,25)
     text=font.render("Passed"+str(passed),True,black)
@@ -260,17 +262,16 @@ def message_display(text):
     pygame.display.update()
     time.sleep(3)
     game_loop()
-
+# This is the bonus coins but I can't figure out wheres the error it says pygame.Surface not list
 def coins(coinx, coiny):
     gamedisplays.blit(coinImg, (coinx,coiny))
-    pygame.display.update()
     
-
     
+# the message for collision 
 def crash():
     message_display("YOU CRASHED")
 
-
+# the background strip but I'm planning to just put an image and not to fill only gray. I'm still working on it using photoshop
 def background():
     gamedisplays.blit(backgroundpic,(0,0))
     gamedisplays.blit(backgroundpic,(0,200))
@@ -290,10 +291,10 @@ def background():
     gamedisplays.blit(strip,(680,0))
     gamedisplays.blit(strip,(680,100))
     gamedisplays.blit(strip,(680,200))
-
+# this is the player
 def car(x,y):
     gamedisplays.blit(carimg,(x,y))
-
+#The Game Loop
 def game_loop():
     global pause
     x=(display_width*0.45)
@@ -302,7 +303,7 @@ def game_loop():
     velocity =5
     obstacle_speed=9
     obs=0
-    coinsx = random.randrange(180,display_width-180)
+    coinsx = random.randrange(180,display_width/2)
     coinsy = -750
     coinSPeed = 5
     coins_width = 100
@@ -375,13 +376,15 @@ def game_loop():
         obstacle(obs_startx,obs_starty,obs)
         obs_starty+=obstacle_speed
         car(x,y)
+        #This is the coins, but actually i just copied the collision for the obstacle and changed it to coins
+        #it will work when i just put one image not with animated
         if coinsy>display_height:
             coinsy=0-obs_height
             coinsx=random.randrange(170,display_width-170)
         if y<coinsx+obs_height:
             if x > coinsx and x < coinsx + obs_width or x+car_width > coinsx and x+car_width < coinsx+obs_width:
                  score += 2
-        
+        # This is for level up when the player reached 10(example) points then go to next level 
         if obs_starty>display_height:
             obs_starty=0-obs_height
             obs_startx=random.randrange(170,(display_width-170))
@@ -398,7 +401,7 @@ def game_loop():
                 pygame.display.update()
                 time.sleep(3)
 
-        
+        #actually this is the hardest part of it i don't understand this code but what i understand it is the restriction 
         if y<obs_starty+obs_height:
             if x > obs_startx and x < obs_startx + obs_width or x+car_width > obs_startx and x+car_width < obs_startx+obs_width:
                 crash()
