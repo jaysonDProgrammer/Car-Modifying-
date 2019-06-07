@@ -4,9 +4,8 @@ import random
 from pygame.locals import *
 import pygame.gfxdraw
 import math
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
+
+
 
 """"  the logic of this program is that the player will use key left right up down
     to navigate the car. Then the player needs to avoid the other cars. and also
@@ -31,23 +30,23 @@ brown =(168,95,0)
 lightbrown = (254,196,54)
 browngame = (104,73,33)
 
- 
 
 gameDisplay=pygame.display.set_mode((display_width, display_height),0,32)
 
-ImageAddress= "/Users/User/Desktop/programming/CAR GAMES/car.table.png"
-ImageItself = Image.open('table.png')
-ImageNumpyFormat = np.asarray(ImageItself)
-plt.imshow(ImageNumpyFormat)
+
+
+
+
+
 
 clock=pygame.time.Clock()
 carImg=pygame.image.load('car1.png')
 coinImg =['coins_01.png','coins_02.png','coins_03.png','coins_05.png','coins_06.png']
 bgImg=pygame.image.load("bgImg.png")
-
+instructionbackground=pygame.image.load("menu1.png")
 intro_background=pygame.image.load("menufirst.png")
-
-
+levelSound = pygame.mixer.Sound('up.wav')
+missilewindow= pygame.image.load('missilewindow.png')
 EnemyImage= ['car.png','car2.png','car3.png','car4.png','car5.png','car6.png','car7.png','car8.png','car9.png',]
 bullet = ['laser.png','laser.png']
 missile = pygame.image.load('Nitro1.png')
@@ -55,13 +54,14 @@ explosion = pygame.image.load('explosion.png')
 flame = pygame.image.load('flame.png')
 bonus = pygame.image.load('HP_Bonus.png')
 missileSound =pygame.mixer.Sound('missile2.wav' )
-crashedSound = pygame.mixer.Sound('crash.wav' )
+crashedSound = pygame.mixer.Sound('explosion.wav' )
 gameOverSound = pygame.mixer.Sound('gameover.wav')
-
-
+collect = pygame.mixer.Sound('collect1.wav')
+collectMissile = pygame.mixer.Sound('coins.wav')
+starts = pygame.mixer.Sound('starts.wav')
 pause=False
-
-
+global LIVES, bulletAllow
+LIVES =3
 #introduction interface 1. Will ask the player to start or quit and also the instruction
 def intro():
     intro=True
@@ -120,7 +120,7 @@ def introduction():
                 pygame.quit()
                 quit()
                 sys.exit()
-        gameDisplay.blit(intro_background, (0, 0))
+        gameDisplay.blit(instructionbackground, (0, 0))
         largetext=pygame.font.Font('freesansbold.ttf',50)
         smalltext=pygame.font.Font('freesansbold.ttf',20)
         mediumtext=pygame.font.Font('freesansbold.ttf',30)
@@ -133,6 +133,8 @@ def introduction():
         gameDisplay.blit(TextSurf, TextRect)
         gameDisplay.blit(obtextSurf, obtextRect)
         gameDisplay.blit(ob2textSurf, ob2textRect)
+        ktextSurf,ktextRect=text_objects("press SPACE BAR : FOR LASER BEAM",smalltext)
+        ktextRect.center=((243),(540))
         ltextSurf,ltextRect=text_objects("press ARROW KEY LEFT : LEFT TURN",smalltext)
         ltextRect.center=((238),(510))
         rtextSurf,rtextRect=text_objects("press ARROW KEY RIGHT : RIGHT TURN" ,smalltext)
@@ -157,7 +159,7 @@ def introduction():
         gameDisplay.blit(utextSurf, utextRect)
         gameDisplay.blit(rtextSurf, rtextRect)
         gameDisplay.blit(ltextSurf, ltextRect)
-      
+        gameDisplay.blit(ktextSurf, ktextRect)
         button("Menu",600,450,100,50,brown,lightbrown,"menu")
         pygame.display.update()
         clock.tick(30)
@@ -188,13 +190,11 @@ def unpaused():
 
 
 def countdown_background():
+    
     font=pygame.font.SysFont(None,35)
     x=(display_width*0.50)
     y=(display_height*0.77)
-    gameDisplay.blit(bgImg, (0, 0))
-
-
-
+    gameDisplay.blit(bgImg, (0, 0))   
     gameDisplay.blit(carImg, (x, y))
     text=font.render("COINS: 0",True, blue)
     text2=font.render("CAR SHOOT: 0",True, red)
@@ -204,13 +204,14 @@ def countdown_background():
     gameDisplay.blit(score, (0, 70))
     button("PAUSE",650,0,150,50,browngame,lightbrown,"pause")
     
+    
 """This code is for the countdown at the beginning of the game.
     I don't understand this much but I think this will just count 1 to 3 and
     then the game will start."""
 
 def countdown():
     countdown=True
-
+    starts.play()
     while countdown:
             for event in pygame.event.get():
                 if event.type==pygame.QUIT:
@@ -267,13 +268,16 @@ def text_objects(text,font):
     return textsurface,textsurface.get_rect()
 
 def message_display(text):
+    
     largetext=pygame.font.Font("freesansbold.ttf",80)
     textsurf,textrect=text_objects(text,largetext)
     textrect.center=((display_width/2),(display_height/2))
     gameDisplay.blit(textsurf, textrect)
     pygame.display.update()
-    time.sleep(3)
+    time.sleep(1)
     gameloop()
+    
+    
 # This is the bonus coins but I can't figure out wheres the error it says pygame.Surface not list
 
 def drawObject(obj, x, y):
@@ -282,13 +286,24 @@ def drawObject(obj, x, y):
 
     
     
-# the message for collision 
-def crash():
-    crashedSound.play()
-    message_display("YOU CRASHED")
-    
-  
 
+    
+def crash():
+    global LIVES
+    bulletAllow= False
+    LIVES = LIVES-1
+    if LIVES ==0:
+        
+        
+        message_display("Game Over")
+        pygame.display.update()
+        gameloop()
+    else:
+        message_display("You lose one life")
+    
+
+
+                        
 
 
 # the background strip but I'm planning to just put an image and not to fill only gray on the background.
@@ -300,7 +315,7 @@ def car(x,y):
     gameDisplay.blit(carImg, (x, y))
 #The Game Loop
 def gameloop():
-    global pause,missile,explosion, Enemy, coins,bonus,carShoot,flame, keys, missileXY
+    global pause,missile,explosion, Enemy, coins,bonus,carShoot,flame, keys, missileXY, LIVES 
     x=(display_width*0.50)
     y=(display_height*0.77)
     velocity =5
@@ -311,15 +326,15 @@ def gameloop():
     bulletX= random.randrange(200, display_width- 200)
     bulletY = -750
     bulletSpeed=5
-    bulletCount = False
+    bulletAllow = False
     coins = pygame.image.load(random.choice(coinImg))
-                              
+                            
     coinSize= coins.get_rect().size
     coinWidth = coinSize[0]
     coinHeight = coinSize[1]
     coinX= random.randrange(200, display_width- 200)
     coinY =-750
-    isCollect = False
+   
     coinSpeed=4
     Enemy = pygame.image.load(random.choice(EnemyImage))
                               
@@ -367,7 +382,7 @@ def gameloop():
             EnemySpeed+=1
         if keys[pygame.K_b]:
             EnemySpeed-=1
-        if bulletCount == True:
+        if bulletAllow == True:
             if keys[pygame.K_SPACE]:
                 missileSound.play()
                 missileX = x + car_width/5
@@ -393,11 +408,8 @@ def gameloop():
                 bulletHeight = bulletSize[1]
                 bulletX= random.randrange(200, display_width- 200)
                 bulletY = -750
-                bulletCount = True
-                plt.show()
-                plt.pause(10)
-                plt.close()
-                
+                bulletAllow = True
+                collectMissile.play()
                 
                     
           
@@ -423,7 +435,7 @@ def gameloop():
             coinHeight = coinSize[1]
             coinX= random.randrange(200, display_width- 200)
             coinY = -750
-        
+            
         
        
             
@@ -474,6 +486,8 @@ def gameloop():
             EnemyX= random.randrange(200,  display_width-200)
             EnemyY=-750
             isShot= False
+
+        
             
             
             
@@ -501,7 +515,7 @@ def gameloop():
             if y > coinY and y < coinY + coinHeight or y+car_width > coinY and x+car_height < coinY+coinHeight:
             
                 if x > coinX and x < coinX + coinWidth or x+car_width > coinX and x+car_width < coinX+coinWidth:   
-                     
+                    collect.play()
                     drawObject(bonus, coinX, coinY)
                     coins = pygame.image.load(random.choice(coinImg))
                     coinSize=coins.get_rect().size
@@ -511,15 +525,18 @@ def gameloop():
                     coinY=-750
                     coinCollect= coinCollect+1
                     score=coinCollect + carShoot
-
-                    if int(score)%10==0:                             
+                    
+    
+                    if int(score)%10==0:
+                        levelSound.play()
                         level=level+1
                         EnemySpeed+=2
-                        pygame.display.update()
+                        
                         largetext=pygame.font.Font("freesansbold.ttf",80)
                         textsurf,textrect=text_objects("LEVEL"+str(level),largetext)
                         textrect.center=((display_width/2),(display_height/2))
                         gameDisplay.blit(textsurf, textrect)
+                        pygame.display.update()
                         time.sleep(3)
        
         
@@ -540,7 +557,7 @@ def gameloop():
                      crash()
         
         gameDisplay.blit(rotated, (coinX, coinY))
-        button("Pause",650,0,150,50,brown,lightbrown,"pause")
+        button("Pause",650,0,150,50,browngame,lightbrown,"pause")
         pygame.display.update()
         clock.tick(60)
 intro()
