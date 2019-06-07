@@ -4,7 +4,9 @@ import random
 from pygame.locals import *
 import pygame.gfxdraw
 import math
-
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
 
 """"  the logic of this program is that the player will use key left right up down
     to navigate the car. Then the player needs to avoid the other cars. and also
@@ -27,19 +29,23 @@ bright_green=(154,240,0)
 bright_blue=(7,185,252)
 brown =(168,95,0)
 lightbrown = (254,196,54)
-
+browngame = (104,73,33)
 
  
 
 gameDisplay=pygame.display.set_mode((display_width, display_height),0,32)
 
+ImageAddress= "/Users/User/Desktop/programming/CAR GAMES/car.table.png"
+ImageItself = Image.open('table.png')
+ImageNumpyFormat = np.asarray(ImageItself)
+plt.imshow(ImageNumpyFormat)
 
 clock=pygame.time.Clock()
 carImg=pygame.image.load('car1.png')
 coinImg =['coins_01.png','coins_02.png','coins_03.png','coins_05.png','coins_06.png']
 bgImg=pygame.image.load("bgImg.png")
 
-intro_background=pygame.image.load("Menu1.png")
+intro_background=pygame.image.load("menufirst.png")
 
 
 EnemyImage= ['car.png','car2.png','car3.png','car4.png','car5.png','car6.png','car7.png','car8.png','car9.png',]
@@ -196,7 +202,7 @@ def countdown_background():
     gameDisplay.blit(text, (0, 30))
     gameDisplay.blit(text2, (0, 50))
     gameDisplay.blit(score, (0, 70))
-    button("PAUSE",650,0,150,50,brown,lightbrown,"pause")
+    button("PAUSE",650,0,150,50,browngame,lightbrown,"pause")
     
 """This code is for the countdown at the beginning of the game.
     I don't understand this much but I think this will just count 1 to 3 and
@@ -294,7 +300,7 @@ def car(x,y):
     gameDisplay.blit(carImg, (x, y))
 #The Game Loop
 def gameloop():
-    global pause,missile,explosion, Enemy, coins,bonus,carShoot,flame, keys
+    global pause,missile,explosion, Enemy, coins,bonus,carShoot,flame, keys, missileXY
     x=(display_width*0.50)
     y=(display_height*0.77)
     velocity =5
@@ -305,6 +311,7 @@ def gameloop():
     bulletX= random.randrange(200, display_width- 200)
     bulletY = -750
     bulletSpeed=5
+    bulletCount = False
     coins = pygame.image.load(random.choice(coinImg))
                               
     coinSize= coins.get_rect().size
@@ -325,10 +332,10 @@ def gameloop():
     carShoot=0
     EnemySpeed=4
     degrees = 0
-    coinCollect=9
+    coinCollect=8
     carShoot=0
     level=1
-    score=9
+    score=8
     y2=7
     fps=120
     missileXY =[]
@@ -360,6 +367,13 @@ def gameloop():
             EnemySpeed+=1
         if keys[pygame.K_b]:
             EnemySpeed-=1
+        if bulletCount == True:
+            if keys[pygame.K_SPACE]:
+                missileSound.play()
+                missileX = x + car_width/5
+                missileY = y - car_height/2
+                missileXY.append([missileX,missileY])
+                
         if int(score)%10==0:
             bulletY += bulletSpeed
             if bulletY > display_height:
@@ -368,7 +382,8 @@ def gameloop():
                 bulletWidth = bulletSize[0]
                 bulletHeight = bulletSize[1]
                 bulletX= random.randrange(200, display_width- 200)
-                bulletY = -750 
+                bulletY = -750
+                
         if y < bulletY < y+car_height or y < bulletY+bulletHeight < y+car_height:
             if x < bulletX < x+car_width or x < bulletX+bulletWidth < x+car_width:
                 
@@ -378,14 +393,12 @@ def gameloop():
                 bulletHeight = bulletSize[1]
                 bulletX= random.randrange(200, display_width- 200)
                 bulletY = -750
-                pygame.display.update()
-                keys = pygame.key.get_pressed()
-                if keys[pygame.K_SPACE]:
-                    
-                    missileSound.play()
-                    missileX = x + car_width/5
-                    missileY = y - car_height/2
-                    missileXY.append([missileX,missileY])
+                bulletCount = True
+                plt.show()
+                plt.pause(10)
+                plt.close()
+                
+                
                     
           
         
@@ -452,14 +465,16 @@ def gameloop():
 
                               
         if isShot:
-            drawObject(flame,EnemyX,EnemyY)
+            
             Enemy = pygame.image.load(random.choice(EnemyImage))
+            drawObject(flame,EnemyX,EnemyY)
             EnemySize=Enemy.get_rect().size
             EnemyWidth= EnemySize[0]
             EnemyHeight= EnemySize[1]
             EnemyX= random.randrange(200,  display_width-200)
             EnemyY=-750
             isShot= False
+            
             
             
            
