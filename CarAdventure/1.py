@@ -4,14 +4,6 @@ import random
 from pygame.locals import *
 import pygame.gfxdraw
 
-
-
-""""  the logic of this program is that the player will use key left right up down
-    to navigate the car. Then the player needs to avoid the other cars. and also
-    the grass has restriction so if the player collide on to the grass it will crash too.
-    If the player collect coins thats the only time the player should score.
-    I'm still planning to add the bullets to have the player like a  bullet to strike the
-    other cars."""
 pygame.init()
 display_width=800
 display_height=600
@@ -36,9 +28,6 @@ pygame.display.set_caption(" Car Adventure " )
 
 
 
-
-
-
 clock=pygame.time.Clock()
 carImg=pygame.image.load('car1.png')
 coinImg =['coins_01.png','coins_02.png','coins_03.png','coins_05.png','coins_06.png']
@@ -48,12 +37,15 @@ intro_background=pygame.image.load("menufirst.png")
 levelSound = pygame.mixer.Sound('up.wav')
 missilewindow= pygame.image.load('missilewindow.png')
 lifewindow= pygame.image.load('life.png')
+speedwindow= pygame.image.load('speed.png')
 EnemyImage= ['car.png','car2.png','car3.png','car4.png','car5.png','car6.png','car7.png','car8.png','car9.png',]
 bullet = ['laser.png','laser.png']
 missile = pygame.image.load('Nitro1.png')
 explosion = pygame.image.load('explosion.png')
 flame = pygame.image.load('flame.png')
+excellent= pygame.image.load('excellent.png')
 bonus = ['HP_Bonus.png']
+crash = pygame.image.load('crash.png')
 missileSound =pygame.mixer.Sound('missile2.wav' )
 crashedSound = pygame.mixer.Sound('explosion.wav' )
 gameOverSound = pygame.mixer.Sound('gameover.wav')
@@ -108,7 +100,7 @@ def button(msg,x,y,w,h,ic,ac,action=None):
                 quit()
                 sys.exit()
             elif action=="intro":
-                introduction()
+                instruction()
             elif action=="menu":
                 intro()
             elif action=="pause":
@@ -125,9 +117,11 @@ def button(msg,x,y,w,h,ic,ac,action=None):
     gameDisplay.blit(textsurf, textrect)
 
 #instruction User interface.. It will show the instruction. but i  haven't add the arrow up and down.
-def introduction():
-    introduction=True
-    while introduction:
+def instruction():
+    instruction=True
+    introSound.stop()
+    while instruction:
+       
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 pygame.quit()
@@ -218,7 +212,7 @@ def countdown_background():
     gameDisplay.blit(cointext, (0, 30))
     gameDisplay.blit(carshoot, (0, 50))
     gameDisplay.blit(score, (0, 70))
-    button("PAUSE",650,0,150,50,browngame,lightbrown,"pause")
+    
     
     
 """This code is for the countdown at the beginning of the game.
@@ -421,11 +415,28 @@ def gameloop():
            
         if keys[pygame.K_DOWN]:
             y +=velocity
+        if keys[pygame.K_p]:
+            paused()
+
+
+
             
-        if keys[pygame.K_a]:
-            EnemySpeed+=1
-        if keys[pygame.K_b]:
-            EnemySpeed-=1
+        if score >=50:
+            if keys[pygame.K_a]:
+                EnemySpeed+=1
+            if keys[pygame.K_b]:
+                EnemySpeed-=1
+        if score< 49:
+            if keys[pygame.K_a]:
+                gameDisplay.blit(speedwindow, (imageX, imageY))
+                pygame.display.update()
+                time.sleep(3)
+            if keys[pygame.K_b]:
+                gameDisplay.blit(speedwindow, (imageX, imageY))
+                pygame.display.update()
+                time.sleep(3)
+            
+                
         if bulletAllow == True:
             if keys[pygame.K_SPACE]:
                 missileSound.play()
@@ -433,16 +444,17 @@ def gameloop():
                 missileY = y - car_height/2
                 missileXY.append([missileX,missileY])
         if  int(score)%10==0:
-            bulletY += bulletSpeed
-            if bulletY > display_height:
-                bulletBonus = pygame.image.load(random.choice(bullet))
-                bulletSize= bulletBonus.get_rect().size
-                bulletWidth = bulletSize[0]
-                bulletHeight = bulletSize[1]
-                bulletX= random.randrange(200, display_width- 200)
-                bulletY = -750
-                
-        
+            if bulletAllow == False:
+                bulletY += bulletSpeed
+                if bulletY > display_height:
+                    bulletBonus = pygame.image.load(random.choice(bullet))
+                    bulletSize= bulletBonus.get_rect().size
+                    bulletWidth = bulletSize[0]
+                    bulletHeight = bulletSize[1]
+                    bulletX= random.randrange(200, display_width- 200)
+                    bulletY = -750
+                    
+            
             
         if LIVES <= 1:
             
@@ -458,7 +470,7 @@ def gameloop():
             if y > lifeY and y < lifeY + lifeHeight or y+car_width > lifeY and x+car_height < lifeY+lifeHeight:
             
                 if x > lifeX and x < lifeX + lifeWidth or x+car_width > lifeX and x+car_width < lifeX+lifeWidth:
-                    
+                    drawObject(excellent, lifeX,lifeY)
                     life = pygame.image.load(random.choice(bonus))
                 
                     lifeSize= coins.get_rect().size
@@ -476,7 +488,7 @@ def gameloop():
             if y > bulletY and y < bulletY + bulletHeight or y+car_width > bulletY and x+car_height < bulletY+bulletHeight:
             
                 if x > bulletX and x < bulletX + bulletWidth or x+car_width > bulletX and x+car_width < bulletX+bulletWidth:
-                
+                    drawObject(excellent, bulletX,bulletY)
                     bulletBonus = pygame.image.load(random.choice(bullet))
                     bulletSize= bulletBonus.get_rect().size
                     bulletWidth = bulletSize[0]
@@ -594,7 +606,7 @@ def gameloop():
             
                 if x > coinX and x < coinX + coinWidth or x+car_width > coinX and x+car_width < coinX+coinWidth:   
                     collect.play()
-                    
+                    drawObject(excellent, coinX,coinY)
                     coins = pygame.image.load(random.choice(coinImg))
                     coinSize=coins.get_rect().size
                     coinWidth= coinSize[0]
@@ -628,10 +640,12 @@ def gameloop():
             EnemyY=0-EnemyHeight           
         if x>690-car_width or x<110:
             explosion.play()
+            drawObject(crash, x,y)
             GameOver()
             
         if x>display_width-(car_width+110) or x<110:
             explosion.play()
+            drawObject(crash, x,y)
             GameOver()
             
             
@@ -640,6 +654,7 @@ def gameloop():
             if y < EnemyY < y+car_height or y < EnemyY+EnemyHeight < y+car_height:
                 if x < EnemyX < x+car_width or x < EnemyX+EnemyWidth < x+car_width:
                     explosion.play()
+                    drawObject(crash, EnemyX,EnemyY)
                     bulletAllow = False
 
                     car(x,y)
@@ -671,7 +686,7 @@ def gameloop():
                      
         
         gameDisplay.blit(rotated, (coinX, coinY))
-        button("Pause",650,0,150,50,browngame,lightbrown,"pause")
+        
         pygame.display.update()
         clock.tick(60)
 intro()
